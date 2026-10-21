@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#173b32">
+    <title>Thư viện Mộc | Quản lý</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main id="login-view" class="login-view" hidden>
+      <form id="login-form" class="login-panel">
+        <p class="eyebrow">THƯ VIỆN MỘC · QUẢN TRỊ</p>
+        <h1>Mở cửa<br>tri thức.</h1>
+        <p class="login-copy">Đăng nhập để quản lý kho sách, độc giả và lượt mượn.</p>
+        <label>Email quản trị<input name="email" type="email" autocomplete="username" required></label>
+        <label>Mật khẩu<input name="password" type="password" autocomplete="current-password" required></label>
+        <p id="login-error" class="form-error" role="alert"></p>
+        <button class="button button-primary button-wide" type="submit">Đăng nhập</button>
+      </form>
+      <div class="login-art" aria-hidden="true"><span>01</span><strong>Một cuốn sách<br>mở ra một thế giới.</strong><small>ĐỌC · GHI NHỚ · CHIA SẺ</small></div>
+    </main>
+
+    <div id="app-view" class="app-shell" hidden>
+      <aside class="sidebar">
+        <a class="brand" href="#books"><span class="brand-mark">M.</span><span>thư viện<br><strong>mộc</strong></span></a>
+        <p class="nav-caption">KHÔNG GIAN</p>
+        <nav aria-label="Điều hướng chính">
+          <button class="nav-item is-active" data-view="books"><span>▤</span> Kho sách</button>
+          <button class="nav-item" data-view="readers"><span>♙</span> Độc giả</button>
+          <button class="nav-item" data-view="loans"><span>↗</span> Mượn &amp; trả</button>
+        </nav>
+        <div class="sidebar-bottom"><span class="status-dot"></span> Hệ thống hoạt động<button id="logout-button" class="text-button">Đăng xuất</button></div>
+      </aside>
+
+      <section class="workspace">
+        <header class="topbar"><span class="topbar-date">QUẢN LÝ THƯ VIỆN</span><span class="avatar">TV</span></header>
+        <main class="content">
+          <div class="page-heading"><div><p id="page-kicker" class="eyebrow">DANH MỤC</p><h1 id="page-title">Kho sách</h1><p id="page-description" class="muted">Theo dõi bộ sưu tập và số bản có thể cho mượn.</p></div><button id="create-button" class="button button-primary"><span aria-hidden="true">＋</span> Thêm sách</button></div>
+          <div class="summary-row" id="summary-row"></div>
+          <div class="table-tools"><label class="search-box"><span aria-hidden="true">⌕</span><input id="search-input" type="search" placeholder="Tìm trong danh sách..." aria-label="Tìm kiếm"></label><span id="result-count" class="muted"></span></div>
+          <div class="table-wrap"><table><thead id="table-head"></thead><tbody id="table-body"></tbody></table><div id="empty-state" class="empty-state" hidden>Chưa có dữ liệu. Bắt đầu bằng nút “Thêm mới”.</div></div>
+        </main>
+        <footer class="footer"><span>THƯ VIỆN MỘC</span><span>Không gian quản trị</span></footer>
+      </section>
+    </div>
+
+    <dialog id="record-dialog" class="record-dialog"><form id="record-form" method="dialog"><div class="dialog-heading"><div><p class="eyebrow">HỒ SƠ</p><h2 id="dialog-title">Thêm mới</h2></div><button class="icon-button" value="cancel" aria-label="Đóng">×</button></div><div id="dialog-fields" class="form-fields"></div><p id="dialog-error" class="form-error" role="alert"></p><div class="dialog-actions"><button class="button button-quiet" value="cancel">Hủy</button><button id="save-button" class="button button-primary" value="save">Lưu hồ sơ</button></div></form></dialog>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="/app.js" defer></script>
+  </body>
+</html>

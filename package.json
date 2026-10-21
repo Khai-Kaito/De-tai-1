@@ -1,0 +1,19 @@
+{
+  "name": "library-management",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Dockerized library management application",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "connect-pg-simple": "^10.0.0",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "express-session": "^1.18.1",
+    "helmet": "^8.0.0",
+    "pg": "^8.13.1",
+    "prom-client": "^15.1.3"
+  }
+}

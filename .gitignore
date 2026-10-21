@@ -1,0 +1,7 @@
+.env
+node_modules/
+npm-debug.log*
+coverage/
+data/
+screenshots/*.png
+!screenshots/.gitkeep
