@@ -53,7 +53,8 @@ Kết quả cần minh chứng gồm: website hoạt động; kết nối pgAdmi
 
 ```mermaid
 flowchart TB
-  User[Trình duyệt] -->|HTTP :8080| Nginx[Nginx reverse proxy]
+  User[Trình duyệt] -->|HTTPS :8443| Nginx[Nginx reverse proxy]
+  User -->|HTTP :8080 redirect| Nginx
   Nginx --> App[Node.js Express]
   App -->|SQL, app user| DB[(PostgreSQL)]
   PgAdmin[pgAdmin :5050] --> DB
@@ -133,9 +134,9 @@ Lưu ảnh tại `screenshots/03-pgadmin-schema.png`.
 
 ## Trang 6. Reverse proxy và hardening
 
-Nginx nhận yêu cầu tại cổng 8080 và chuyển tiếp đến service `app:3000` qua `app_net`. Ứng dụng không publish port trực tiếp. Nginx chuyển tiếp thông tin host, địa chỉ client và scheme bằng các header `X-Forwarded-*`. Endpoint metrics không được công khai qua proxy; exporter đọc trang trạng thái Nginx trên listener riêng trong mạng Compose.
+Nginx nhận HTTPS tại cổng 8443 (HTTP cổng 8080 chỉ chuyển hướng sang HTTPS) và chuyển tiếp đến service `app:3000` qua `app_net`. Ứng dụng không publish port trực tiếp. Nginx chuyển tiếp thông tin host, địa chỉ client và scheme bằng các header `X-Forwarded-*`. Endpoint metrics không được công khai qua proxy; exporter đọc trang trạng thái Nginx trên listener riêng trong mạng Compose.
 
-Các header gồm X-Content-Type-Options `nosniff`, X-Frame-Options `DENY`, Referrer-Policy, Permissions-Policy và Content-Security-Policy. Nginx tắt server token, giới hạn kích thước body 32 KB và cấu hình timeout. Bản demo chọn HTTP cùng security headers để dễ chạy local; khi cần minh chứng HTTPS có thể thêm chứng thư tự ký và listener TLS, trình duyệt sẽ cảnh báo chứng thư chưa được tin cậy.
+Nginx dùng chứng thư tự ký với SAN là IP mạng nội bộ của máy triển khai, TLS 1.2/1.3 và các header X-Content-Type-Options `nosniff`, X-Frame-Options `DENY`, Referrer-Policy, Permissions-Policy, Content-Security-Policy. Nginx tắt server token, giới hạn kích thước body 32 KB và cấu hình timeout. Trình duyệt sẽ cảnh báo chứng thư tự ký chưa được tin cậy; IP có thể đổi theo DHCP và chứng thư demo không dùng cho tên miền public.
 
 Biện pháp giảm quyền đang có trong Compose:
 

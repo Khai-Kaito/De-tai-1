@@ -45,6 +45,7 @@ services:
       LIBRARY_ADMIN_EMAIL: ${LIBRARY_ADMIN_EMAIL:?Set LIBRARY_ADMIN_EMAIL in .env}
       LIBRARY_ADMIN_PASSWORD: ${LIBRARY_ADMIN_PASSWORD:?Set LIBRARY_ADMIN_PASSWORD in .env}
       SESSION_SECRET: ${SESSION_SECRET:?Set SESSION_SECRET in .env}
+      COOKIE_SECURE: "true"
       LOG_FILE: /var/log/library/app.log
     volumes:
       - app_logs:/var/log/library
@@ -65,8 +66,10 @@ services:
     image: nginxinc/nginx-unprivileged:1.27-alpine
     ports:
       - "${WEB_PORT:-8080}:8080"
+      - "${WEB_TLS_PORT:-8443}:8443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certs:/etc/nginx/certs:ro
       - nginx_logs:/var/log/nginx
     networks: [app_net, monitoring, edge]
     depends_on: [app, logs-init]

@@ -6,7 +6,8 @@
 
 ```mermaid
 flowchart LR
-  Browser -->|:8080| Nginx
+  Browser -->|HTTPS :8443| Nginx
+  Browser -->|HTTP :8080 redirect| Nginx
   Nginx --> App[Node.js / Express]
   App -->|data network| PostgreSQL
   PgAdmin --> PostgreSQL
@@ -24,7 +25,7 @@ flowchart LR
 
 ## Chạy local
 
-Yêu cầu Docker Desktop ở chế độ Linux containers và Docker Compose v2.
+Yêu cầu Docker Desktop ở chế độ Linux containers và Docker Compose v2. Website dùng chứng thư tự ký cho IP mạng nội bộ; trình duyệt sẽ cảnh báo rằng chứng thư chưa được tin cậy. IP Wi-Fi hiện tại của máy chạy dự án là `192.168.1.173`; nếu IP máy bạn khác, thay giá trị này bằng IPv4 trong kết quả `ipconfig`.
 
 1. Tạo file môi trường: `Copy-Item .env.example .env`.
 2. Sinh mật khẩu hex riêng biệt cho từng tài khoản. Trong PowerShell có thể dùng:
@@ -33,19 +34,32 @@ Yêu cầu Docker Desktop ở chế độ Linux containers và Docker Compose v2
    [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
    ```
 
-   Thay các placeholder trong `.env`. Mật khẩu quản trị web phải dài tối thiểu 16 ký tự. Không commit `.env`.
-3. Khởi động: `docker compose up -d --build`.
-4. Kiểm tra: `docker compose ps` và `docker compose logs --tail=100 app`.
-5. Truy cập các địa chỉ sau:
+  Thay các placeholder trong `.env`. Mật khẩu quản trị web tối thiểu 8 ký tự; dùng mật khẩu dài, riêng biệt khi triển khai ngoài máy demo. Không commit `.env`.
+3. Sinh chứng thư self-signed cho IP mạng nội bộ (cần Docker đang chạy). Nếu cần, sửa `$lanIp` thành IPv4 của máy chạy Docker. Khóa riêng nằm trong `certs/`, thư mục này đã được loại khỏi Git:
+
+   ```powershell
+   $lanIp = "192.168.1.173"
+   New-Item -ItemType Directory -Force certs | Out-Null
+   docker run --rm -v "${PWD}\certs:/certs" alpine:3.21 sh -c "apk add --no-cache openssl >/dev/null && openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /certs/web.key -out /certs/web.crt -subj '/CN=$lanIp' -addext 'subjectAltName=IP:$lanIp' && chmod 644 /certs/web.key"
+   ```
+
+   Khóa cần quyền đọc cho Nginx chạy non-root; chỉ dùng chứng thư này trong mạng nội bộ trên máy tin cậy, không tái sử dụng khi triển khai public.
+
+4. Khởi động: `docker compose up -d --build`.
+5. Kiểm tra: `docker compose ps` và `docker compose logs --tail=100 app nginx`.
+6. Truy cập các địa chỉ sau:
 
 | Dịch vụ | Địa chỉ | Tài khoản |
 | --- | --- | --- |
-| Website | http://localhost:8080 | `LIBRARY_ADMIN_EMAIL` / `LIBRARY_ADMIN_PASSWORD` |
+| Website | https://192.168.1.173:8443 | `LIBRARY_ADMIN_EMAIL` / `LIBRARY_ADMIN_PASSWORD` |
+| HTTP (tự chuyển sang HTTPS) | http://192.168.1.173:8080 | — |
 | pgAdmin | http://localhost:5050 | `PGADMIN_DEFAULT_EMAIL` / `PGADMIN_DEFAULT_PASSWORD` |
 | Prometheus | http://localhost:9090 | Chỉ bind vào localhost |
 | Grafana | http://localhost:3000 | `GRAFANA_ADMIN_USER` / `GRAFANA_ADMIN_PASSWORD` |
 
 Trong pgAdmin, đăng ký server với host `postgres`, port `5432`, database `library`, user `library_app`, và mật khẩu `LIBRARY_DB_PASSWORD`. Nếu pgAdmin yêu cầu master password thì đặt mật khẩu riêng, không dùng lại thông tin database.
+
+Để thêm dữ liệu mẫu và chạy truy vấn, mở database `library` → **Tools → Query Tool**, mở file `db/pgadmin-demo-data.sql`, rồi chạy toàn bộ script. Script thêm sách, hồ sơ độc giả mẫu và lượt mượn gồm một lượt đang mượn, một lượt quá hạn và một lượt đã trả; có thể chạy lại mà không tạo bản trùng. `readers` là hồ sơ độc giả, không phải tài khoản đăng nhập. Các câu `SELECT` phía dưới hiển thị sách, độc giả, lượt mượn/quá hạn và thống kê thể loại.
 
 Grafana có sẵn datasource Prometheus và Loki cùng dashboard **Library - Tổng quan hệ thống**. Để xem log: Explore → chọn Loki → chạy một trong các LogQL bên dưới. Chọn khoảng thời gian bao gồm lúc đã phát sinh request.
 
@@ -73,7 +87,7 @@ Có thể sinh hoạt động thử để dashboard/log có dữ liệu: đăng 
 - Cookie HttpOnly/SameSite, kiểm tra header chống CSRF cho thay đổi dữ liệu, session rotation sau login, rate limit login.
 - Query PostgreSQL có tham số, giới hạn JSON request 32 KB, health check, không đưa secrets vào Git.
 
-Đây là cấu hình demo học tập trên máy local, chưa thay thế quy trình production. Nếu publish ra Internet, cần TLS, quản lý secrets bằng secret store, xác thực dashboard/admin, phân quyền mạng chặt hơn và rà soát phiên bản image. pgAdmin/Prometheus/Grafana đang dành cho localhost. Nginx dùng HTTP nhưng có security headers; có thể bổ sung chứng thư HTTPS tự ký nếu bài demo bắt buộc HTTPS.
+Đây là cấu hình demo học tập trong mạng nội bộ, chưa thay thế quy trình production. Chứng thư tự ký không được trình duyệt tin cậy mặc định và IP có thể đổi theo DHCP; nên đặt DHCP reservation nếu cần địa chỉ ổn định. Nếu publish ra Internet, thay bằng chứng thư CA tin cậy (ví dụ Let's Encrypt) cho tên miền, quản lý secrets bằng secret store, xác thực dashboard/admin, phân quyền mạng chặt hơn và rà soát phiên bản image. pgAdmin/Prometheus/Grafana đang dành cho localhost.
 
 ## Các lệnh hữu ích
 

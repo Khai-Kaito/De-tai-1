@@ -89,8 +89,8 @@ async function initializeDatabase() {
 
   const email = process.env.LIBRARY_ADMIN_EMAIL;
   const password = process.env.LIBRARY_ADMIN_PASSWORD;
-  if (!email || !password || password.length < 16) {
-    throw new Error('Set LIBRARY_ADMIN_EMAIL and a LIBRARY_ADMIN_PASSWORD of at least 16 characters.');
+  if (!email || !password || password.length < 8) {
+    throw new Error('Set LIBRARY_ADMIN_EMAIL and a LIBRARY_ADMIN_PASSWORD of at least 8 characters.');
   }
   const passwordHash = await bcrypt.hash(password, 12);
   await pool.query(
